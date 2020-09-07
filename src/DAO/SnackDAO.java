@@ -8,19 +8,24 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 
-import DTO.BoardDTO;
+import DTO.SnackDTO;
 
-public class BoardDAO {
+public class SnackDAO {
 	private Connection conn = null;
 	private String driver = "oracle.jdbc.driver.OracleDriver";
 	private String url = "jdbc:oracle:thin:@localhost:1521:orcl";
 	private String id = "system";
 	private String pwd = "1111";
 
-	private static BoardDAO bdao = null;
-	public static BoardDAO getInstance() {
-		bdao =new BoardDAO();
-		return bdao;
+	private static SnackDAO sdao = null;
+	public static SnackDAO getInstance() {
+		if(sdao ==null) {
+		sdao =new SnackDAO();
+		}
+		return sdao;
+	}
+	private SnackDAO() {
+		
 	}
 	private ResultSet rs = null;
 	
@@ -36,18 +41,18 @@ public class BoardDAO {
 		return null;
 	}
 
-	// 글 등록
-	public void insert(BoardDTO bdto) {
-		String sql = "insert into board values (?, ?, ?, ?, ?)";
+	// 과자 등록
+	public void insert(SnackDTO sdto) {
+		String sql = "insert into snack values (?, ?, ?, ?, ?)";
 		PreparedStatement ppst = null;
 		if (conn() != null) {
 			try {
 				ppst = conn.prepareStatement(sql);
-				ppst.setInt(1, bdto.getNo()); // no
-				ppst.setString(2, bdto.getTitle()); // title
-				ppst.setString(3, bdto.getContent()); // content
-				ppst.setString(4, bdto.getWriter()); // 작성자
-				ppst.setInt(5, bdto.getCnt()); // 조회수
+				ppst.setInt(1, sdto.getNo()); // 번호
+				ppst.setString(2, sdto.getName()); // 과자 이름
+				ppst.setString(3, sdto.getCompany()); // 회사
+				ppst.setInt(4, sdto.getPrice()); // 가격
+				ppst.setInt(5, sdto.getCnt()); // 수량
 				ppst.executeUpdate();
 			} catch (Exception e) {
 			} finally {
@@ -64,20 +69,20 @@ public class BoardDAO {
 	}
 
 	// 목록 보기
-	public ArrayList<BoardDTO> list() {
-		String sql = "select * from board";
-		ArrayList<BoardDTO> list = new ArrayList<>();
+	public ArrayList<SnackDTO> list() {
+		String sql = "select * from snack";
+		ArrayList<SnackDTO> list = new ArrayList<>();
 		Statement st = null;
 		if(conn() != null) {
 			try {
 				st = conn.createStatement();
 				rs = st.executeQuery(sql);
 				while(rs.next()) {
-					BoardDTO tempDTO = new BoardDTO();
+					SnackDTO tempDTO = new SnackDTO();
 					tempDTO.setNo(rs.getInt("no"));
-					tempDTO.setTitle(rs.getString("title"));
-					tempDTO.setContent(rs.getNString("content"));
-					tempDTO.setWriter(rs.getNString("writer"));
+					tempDTO.setName(rs.getString("name"));
+					tempDTO.setCompany(rs.getNString("company"));
+					tempDTO.setPrice(rs.getInt("price"));
 					tempDTO.setCnt(rs.getInt("cnt"));
 					list.add(tempDTO);
 				}
@@ -96,9 +101,9 @@ public class BoardDAO {
 		return list;
 	}
 
-	// 글 삭제
+	// 과자 삭제
 	public void delete(int no) {
-		String sql = "delete from board where no =?";
+		String sql = "delete from snack where no =?";
 		PreparedStatement ppst = null;
 		if (conn() != null) {
 			try {
@@ -119,19 +124,19 @@ public class BoardDAO {
 		}
 	}
 
-	// 글 수정
-	public void update(int no, String title) {
-		String sql= "update board set title=? where no=?";
+	// 과자 가격 수정
+	public void update(String name, int price) {
+		String sql= "update snack set price=? where name=?";
 		PreparedStatement ppst = null;
 		if(conn() != null) {
 			try {
 				ppst=conn.prepareStatement(sql);
-				ppst.setString(1, title);
-				ppst.setInt(2, no);
+				ppst.setInt(1, price);
+				ppst.setString(2, name);
 				ppst.executeUpdate();
-				System.out.println("업데이트 완료");
+				System.out.println("수정 완료");
 			} catch (Exception e) {
-				System.out.println("업데이트 예외발생");
+				System.out.println("실패");
 			} finally {
 				try {
 					if(ppst!= null);
@@ -143,5 +148,37 @@ public class BoardDAO {
 				}
 			}
 		}
+	}
+	// 품절
+	public ArrayList<SnackDTO> zero() {
+		String sql = "select * from snack where cnt=0";
+		Statement st = null;
+		ArrayList<SnackDTO> tempList= new ArrayList<>();
+		if (conn() != null) {
+			try {
+				st = conn.createStatement();
+				rs=st.executeQuery(sql);
+				while(rs.next()) {
+					SnackDTO tempDTO= new SnackDTO();
+					tempDTO.setNo(rs.getInt("no"));
+					tempDTO.setName(rs.getString("name"));
+					tempDTO.setCompany(rs.getString("company"));
+					tempDTO.setPrice(rs.getInt("price"));
+					tempDTO.setCnt(rs.getInt("cnt"));
+					tempList.add(tempDTO);
+				}
+			} catch (Exception e) {
+			} finally {
+				try {
+					if (st != null)
+						st.close();
+					if (conn != null)
+						conn.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		return tempList;
 	}
 }
